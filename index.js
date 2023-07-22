@@ -26,7 +26,6 @@ function GameBoard() {
 
     const printBoard = () => {
         const board = _board.map(row => row.map(cell => cell.getValue()));
-        console.table(board);
     }
 
     resetBoard()
@@ -69,6 +68,10 @@ function GameController(
 
     let activePlayer = players[0];
 
+    const resetPlayer = () => {
+        activePlayer = players[0];
+    }
+
     const switchPlayer = () => {
         activePlayer = activePlayer === players[0] ? players[1] : players[0];
     }
@@ -77,7 +80,6 @@ function GameController(
 
     const printNewRound = () => {
         board.printBoard();
-        console.log(`${getActivePlayer().name}'s turn.`)
     }
 
     const checkWinner = (playerToken) => {
@@ -102,11 +104,26 @@ function GameController(
         }
 
         // Check for winner in a diagonal
-        let tokenInDiagonal = 0;
+        // *
+        //      *
+        //          *
+        let tokenInDiagonal1 = 0;
         for (let i = 0; i < 3; i++) {
-            if (playerToken === board.getBoard()[i][i].getValue()) tokenInDiagonal += 1;
+            if (playerToken === board.getBoard()[i][i].getValue()) tokenInDiagonal1 += 1;
         }
-        if (tokenInDiagonal === 3) return `${getActivePlayer().name} Wins!!`;
+        if (tokenInDiagonal1 === 3) return `${getActivePlayer().name} Wins!!`;
+
+        // Check for winner in a diagonal
+        //          *
+        //      *
+        // *
+        let tokenInDiagonal2 = 0;
+        let k = 2;
+        for (let i = 0; i < 3; i++) {
+            if (playerToken === board.getBoard()[k][i].getValue()) tokenInDiagonal2 += 1;
+            k -= 1;
+        }
+        if (tokenInDiagonal2 === 3) return `${getActivePlayer().name} Wins!!`;
     }
 
     const playRound = (row, column) => {
@@ -118,10 +135,7 @@ function GameController(
             switchPlayer();
             printNewRound();
         } else {
-            const winnerDiv = document.getElementById('winner');
-            winnerDiv.innerHTML = winner;
-            board.resetBoard();
-            activePlayer = players[0];
+            return winner;
         }
     }
 
@@ -129,7 +143,9 @@ function GameController(
     return {
         playRound,
         getActivePlayer,
-        getBoard: board.getBoard
+        getBoard: board.getBoard,
+        resetBoard: board.resetBoard,
+        resetPlayer,
     }
 }
 
@@ -174,8 +190,23 @@ function ScreenController() {
 
         if (clickedToken === "X" || clickedToken === "O") return;
 
-        game.playRound(row, column);
+        const winner = game.playRound(row, column);
         updateScreen();
+        if (winner === undefined){
+            return
+        } else {
+            const winnerDiv = document.getElementById('winner');
+            winnerDiv.innerText = winner;
+            updateScreen();
+            setTimeout(() => {
+                winnerDiv.innerText = "";
+                game.resetPlayer();
+            }, 3200);
+            setTimeout(() => {
+                game.resetBoard();
+            }, 3000);
+            updateScreen();
+        }
     }
 
     boardDiv.addEventListener('click', handleClick);
