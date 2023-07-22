@@ -3,10 +3,12 @@ function GameBoard() {
     const _rows = 3;
     const _board = [];
 
-    for (let i = 0; i < _rows; i++) {
-        _board[i] = [];
-        for (let j = 0; j < _columns; j++) {
-            _board[i].push(Cell());
+    const resetBoard = () => {
+        for (let i = 0; i < _rows; i++) {
+            _board[i] = [];
+            for (let j = 0; j < _columns; j++) {
+                _board[i].push(Cell());
+            }
         }
     }
 
@@ -27,7 +29,9 @@ function GameBoard() {
         console.table(board);
     }
 
-    return {getBoard, printBoard, dropToken}
+    resetBoard()
+
+    return {resetBoard, getBoard, printBoard, dropToken}
 }
 
 function Cell() {
@@ -76,22 +80,49 @@ function GameController(
         console.log(`${getActivePlayer().name}'s turn.`)
     }
 
-    const playRound = (row, column) => {
-        console.log(`${getActivePlayer().name} played at coordinate (${row}, ${column})`);
-        board.dropToken(row, column, getActivePlayer().token);
-
-        let xInRow = 0
+    const checkWinner = (playerToken) => {
+        // Check for a winner in a row
         for (let i = 0; i < 3; i++) {
+            let tokenInRow = 0
             for (let j = 0; j < 3; j++) {
-                // Check for a winner
-                console.log('clickVal', board.getBoard()[i][j].getValue())
-                if (null) {}
-                
+                const cellToken = board.getBoard()[i][j].getValue()
+                if (playerToken === cellToken) tokenInRow += 1;
             }
+            if (tokenInRow === 3) return `${getActivePlayer().name} Wins!!`;
         }
 
-        switchPlayer();
-        printNewRound();
+        // Check for a winner in a column
+        for (let i = 0; i < 3; i++) {
+            let tokenInCol = 0
+            for (let j = 0; j < 3; j++) {
+                const cellToken = board.getBoard()[j][i].getValue()
+                if (playerToken === cellToken) tokenInCol += 1;
+            }
+            if (tokenInCol === 3) return `${getActivePlayer().name} Wins!!`;
+        }
+
+        // Check for winner in a diagonal
+        let tokenInDiagonal = 0;
+        for (let i = 0; i < 3; i++) {
+            if (playerToken === board.getBoard()[i][i].getValue()) tokenInDiagonal += 1;
+        }
+        if (tokenInDiagonal === 3) return `${getActivePlayer().name} Wins!!`;
+    }
+
+    const playRound = (row, column) => {
+        const playerToken = getActivePlayer().token;
+        board.dropToken(row, column, playerToken);
+
+        const winner = checkWinner(playerToken)
+        if (winner === undefined) {
+            switchPlayer();
+            printNewRound();
+        } else {
+            const winnerDiv = document.getElementById('winner');
+            winnerDiv.innerHTML = winner;
+            board.resetBoard();
+            activePlayer = players[0];
+        }
     }
 
     printNewRound();
